@@ -190,6 +190,36 @@ def test_client_invalid_json_response(client, response):
         client.customers.list()
 
 
+def test_client_list_with_includes(client, response):
+    """Specifying include on list() should result in the correct request."""
+    response.get('https://api.mollie.com/v2/methods?include=pricing', 'methods_list_including_pricing')
+
+    methods = client.methods.list(include=['pricing'])
+    assert_list_object(methods, Method)
+
+
+def test_client_list_with_invalid_include(client):
+    """Specifying an unsupported include on list() should raise error."""
+    with pytest.raises(RequestSetupError) as excinfo:
+        client.methods.list(include=['doesnotexist'])
+    assert "No such include for Methods: doesnotexist" in str(excinfo.value)
+
+
+def test_client_get_with_includes(client, response):
+    """Specifying include on get() should result in the correct request."""
+    response.get('https://api.mollie.com/v2/methods/ideal?include=issuers', 'method_get_ideal_with_includes')
+
+    method = client.methods.get("ideal", include=["issuers"])
+    assert isinstance(method, Method)
+
+
+def test_client_get_with_invalid_include(client):
+    """Specifying an unsupported include on get() should raise error."""
+    with pytest.raises(RequestSetupError) as excinfo:
+        client.methods.get("ideal", include=["doesnotexist"])
+    assert "No such include for Methods: doesnotexist" in str(excinfo.value)
+
+
 @pytest.mark.parametrize('resp_payload, resp_status, exception, errormsg', [
     ('error_unauthorized', 401, UnauthorizedError, 'Missing authentication, or failed to authenticate'),
     ('customer_doesnotexist', 404, NotFoundError, 'No customer exists with token cst_doesnotexist.'),
